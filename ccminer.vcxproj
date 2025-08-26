@@ -92,7 +92,8 @@
       <GenerateLineInfo>true</GenerateLineInfo>
       <MaxRegCount>80</MaxRegCount>
       <PtxAsOptionV>true</PtxAsOptionV>
-      <Keep>true</Keep>
+      <Keep>false</Keep>
+      <CudaCompileThreads>8</CudaCompileThreads>
       <CodeGeneration>
         compute_120,sm_120;
         compute_101,sm_101;
@@ -112,7 +113,12 @@
         compute_60,sm_60;
       </CodeGeneration>
       <Include>$(NVTOOLSEXT_PATH)\include;..\..\..\Common\C99</Include>
+      <AdditionalOptions>--use_fast_math %(AdditionalOptions)</AdditionalOptions>
+      <EnableSeparateCompilation>true</EnableSeparateCompilation>
     </CudaCompile>
+    <CudaLink>
+      <PerformDeviceLink>true</PerformDeviceLink>
+    </CudaLink>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -141,7 +147,8 @@
       <GenerateLineInfo>true</GenerateLineInfo>
       <MaxRegCount>80</MaxRegCount>
       <PtxAsOptionV>true</PtxAsOptionV>
-      <Keep>true</Keep>
+      <Keep>false</Keep>
+      <CudaCompileThreads>8</CudaCompileThreads>
       <CodeGeneration>
         compute_120,sm_120;
         compute_101,sm_101;
@@ -162,14 +169,17 @@
       </CodeGeneration>
       <Include>$(NVTOOLSEXT_PATH)\include;..\..\..\Common\C99</Include>
       <TargetMachinePlatform>64</TargetMachinePlatform>
+      <AdditionalOptions>--use_fast_math %(AdditionalOptions)</AdditionalOptions>
+      <EnableSeparateCompilation>true</EnableSeparateCompilation>
     </CudaCompile>
     <CudaLink>
-      <PerformDeviceLink>false</PerformDeviceLink>
+      <PerformDeviceLink>true</PerformDeviceLink>
     </CudaLink>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
+      <Favor>Host</Favor>
       <Optimization>MaxSpeed</Optimization>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -196,12 +206,14 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <LinkStatus>false</LinkStatus>
       <LargeAddressAware>true</LargeAddressAware>
+      <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
     </Link>
     <CudaCompile>
       <CInterleavedPTX>false</CInterleavedPTX>
       <MaxRegCount>80</MaxRegCount>
       <PtxAsOptionV>true</PtxAsOptionV>
-      <Keep>true</Keep>
+      <Keep>false</Keep>
+      <CudaCompileThreads>8</CudaCompileThreads>
       <CodeGeneration>
         compute_120,sm_120;
         compute_101,sm_101;
@@ -220,10 +232,12 @@
         compute_61,sm_61;
         compute_60,sm_60;
       </CodeGeneration>
-      <AdditionalOptions>--ptxas-options="-O2" --Wno-deprecated-gpu-targets %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>--use_fast_math --ptxas-options="-O2" --Wno-deprecated-gpu-targets %(AdditionalOptions)</AdditionalOptions>
       <Optimization>O2</Optimization>
+      <EnableSeparateCompilation>true</EnableSeparateCompilation>
     </CudaCompile>
     <CudaLink>
+      <PerformDeviceLink>true</PerformDeviceLink>
       <GPUDebugInfo>false</GPUDebugInfo>
       <Optimization>O3</Optimization>
     </CudaLink>
@@ -261,8 +275,8 @@
       <CInterleavedPTX>false</CInterleavedPTX>
       <MaxRegCount>80</MaxRegCount>
       <PtxAsOptionV>true</PtxAsOptionV>
-      <Keep>true</Keep>
-      <CodeGeneration>
+      <Keep>false</Keep>
+      <CodeGeneration><!--
         compute_120,sm_120;
         compute_101,sm_101;
         compute_100a,sm_100a;
@@ -278,16 +292,21 @@
         compute_70,sm_70;
         compute_62,sm_62;
         compute_61,sm_61;
-        compute_60,sm_60;
+        compute_60,sm_60;-->
+        compute_61,sm_61;
       </CodeGeneration>
+      <AdditionalOptions>--use_fast_math %(AdditionalOptions)</AdditionalOptions>
       <Include>$(NVTOOLSEXT_PATH)\include</Include>
       <Optimization>O3</Optimization>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <AdditionalOptions>--Wno-deprecated-gpu-targets %(AdditionalOptions)</AdditionalOptions>
+      <EnableSeparateCompilation>true</EnableSeparateCompilation>
+      <EnableSeparateCompilation>true</EnableSeparateCompilation>
     </CudaCompile>
     <CudaLink>
+      <PerformDeviceLink>true</PerformDeviceLink>
+      <GPUDebugInfo>false</GPUDebugInfo>
       <Optimization>O3</Optimization>
-      <PerformDeviceLink>false</PerformDeviceLink>
     </CudaLink>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -645,13 +664,13 @@
     </CudaCompile>
     <CudaCompile Include="skunk\skunk.cu" />
     <CudaCompile Include="skunk\cuda_skunk.cu">
-      <CodeGeneration>compute_50,sm_50;compute_52,sm_52</CodeGeneration>
+      <CodeGeneration>compute_50,sm_50;compute_52,sm_52;compute_61,sm_61</CodeGeneration>
       <MaxRegCount>64</MaxRegCount>
     </CudaCompile>
     <CudaCompile Include="skunk\cuda_skunk_streebog.cu" />
     <ClInclude Include="tribus\cuda_echo512_aes.cuh" />
     <CudaCompile Include="tribus\cuda_echo512_final.cu">
-      <CodeGeneration>compute_50,sm_50;compute_52,sm_52</CodeGeneration>
+      <CodeGeneration>compute_50,sm_50;compute_52,sm_52;compute_61,sm_61</CodeGeneration>
     </CudaCompile>
     <CudaCompile Include="tribus\tribus.cu" />
     <ClInclude Include="x11\cuda_x11_aes.cuh" />
@@ -699,6 +718,7 @@
     <CudaCompile Include="x15\whirlpool.cu" />
     <CudaCompile Include="x15\cuda_x15_whirlpool_sm3.cu" />
     <CudaCompile Include="x16\x16r.cu" />
+    <CudaCompile Include="x16\x16rt.cu" />
     <CudaCompile Include="x16\x16rv2.cu" />
     <CudaCompile Include="x16\x16s.cu" />
     <CudaCompile Include="x16\cuda_x16_echo512.cu" />
@@ -707,7 +727,7 @@
     <CudaCompile Include="x16\cuda_x16_shavite512.cu" />
     <CudaCompile Include="x16\cuda_x16_simd512_80.cu" />
     <CudaCompile Include="x16\cuda_x16_echo512_64.cu">
-      <CodeGeneration>compute_50,sm_50;compute_52,sm_52</CodeGeneration>
+      <CodeGeneration>compute_50,sm_50;compute_52,sm_52;compute_61,sm_61</CodeGeneration>
     </CudaCompile>
     <CudaCompile Include="x17\hmq17.cu" />
     <CudaCompile Include="x17\x17.cu" />
@@ -719,7 +739,22 @@
     <CudaCompile Include="x21\x21s.cu" />
     <CudaCompile Include="x21\cuda_sha256_2.cu" />
     <CudaCompile Include="x21\cuda_tiger192.cu" />
-	<CudaCompile Include="rinhash\rinhash.cu" />
+<!--
+	  <CudaCompile Include="rinhash\blake3_device.cu" >
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+    </CudaCompile>
+	  <CudaCompile Include="rinhash\sha3-256.cu" >
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+    </CudaCompile>
+-->
+	  <CudaCompile Include="rinhash\argon2d_device.cu"> 
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+    </CudaCompile>
+	  <CudaCompile Include="rinhash\rinhash.cu"> 
+      <CodeGeneration>compute_61,sm_61</CodeGeneration>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+    </CudaCompile>
+
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\ccminer.ico" />

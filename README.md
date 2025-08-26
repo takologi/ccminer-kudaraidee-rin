@@ -1,5 +1,12 @@
 # ccminer
 
+Forked from [Kudaraidee/ccminer-kudaraidee]https://github.com/Kudaraidee/ccminer-kudaraidee and tweaked to work with Rincoin and to use newer versions of dependent libraries (curl, openssl). Therefore, some hash algorithms had to be cut out.
+
+THIS IS STILL AN ALPHA!!
+
+
+Next is README from Kudaraidee/ccminer-kudaraidee:
+
 Based on Christian Buchner's &amp; Christian H.'s CUDA project, no more active on github since 2014.
 
 Check the [README.txt](README.txt) for the additions

@@ -7,6 +7,10 @@
 #include <miner.h>
 #include "cuda_helper.h"
 
+// include global definitions
+#include "rinhash_globals.h"
+
+
 using namespace std;
 
 // External reference to RinHash CUDA functions
@@ -20,27 +24,17 @@ extern "C" void RinHash(
     uint8_t* output
 );
 
-extern "C" void RinHash_mine(
-    const uint32_t* work_data,
-    uint32_t nonce_offset,
-    uint32_t start_nonce,
-    uint32_t num_nonces,
-    uint32_t* found_nonce,
-    uint8_t* target_hash,
-    uint8_t* best_hash
-);
-
 // 🚀 NEW: Optimized mining function with target-aware early termination
 extern "C" void RinHash_mine_optimized(
     const uint32_t* work_data,
-    uint32_t nonce_offset,
     uint32_t start_nonce,
     uint32_t num_nonces,
     uint32_t* target,
     uint32_t* found_nonce,
     uint8_t* target_hash,
     uint8_t* best_hash,
-    uint32_t* solution_found
+    uint32_t* solution_found,
+    int thr_id
 );
 
 // Thread-local variables
@@ -77,7 +71,7 @@ int scanhash_rinhash(int thr_id, struct work *work, uint32_t max_nonce, unsigned
 {
     uint32_t *pdata = work->data;
     uint32_t *ptarget = work->target;
-    const uint32_t first_nonce = pdata[19];
+    const uint32_t first_nonce = pdata[RINHASH_NONCE_OFFSET];
     uint32_t nonce = first_nonce;
     if (opt_benchmark)
         ptarget[7] = 0x0000ff;
@@ -100,16 +94,16 @@ int scanhash_rinhash(int thr_id, struct work *work, uint32_t max_nonce, unsigned
                total_mem / (1024.0 * 1024.0 * 1024.0), batch_size);
     }
     uint32_t found_nonce = 0;
-    uint8_t best_hash[32];
-    uint8_t target_hash[32];
+    uint8_t best_hash[RINHASH_HASH_8B_LENGTH];
+    uint8_t target_hash[RINHASH_HASH_8B_LENGTH];
 
     // Convert target to bytes
-    for (int i = 0; i < 8; i++) {
-        uint32_t tmp = ptarget[7-i];
-        target_hash[i*4+0] = (tmp >> 24) & 0xff;
-        target_hash[i*4+1] = (tmp >> 16) & 0xff;
-        target_hash[i*4+2] = (tmp >> 8) & 0xff;
-        target_hash[i*4+3] = tmp & 0xff;
+    for (int i = 0; i < RINHASH_HASH_32B_LENGTH; i++) {
+        uint32_t tmp = ptarget[i];
+        target_hash[i*4+0] = tmp & 0xff;
+        target_hash[i*4+1] = (tmp >> 8) & 0xff;
+        target_hash[i*4+2] = (tmp >> 16) & 0xff;
+        target_hash[i*4+3] = (tmp >> 24) & 0xff;
     }
 
     work->valid_nonces = 0;
@@ -129,23 +123,25 @@ int scanhash_rinhash(int thr_id, struct work *work, uint32_t max_nonce, unsigned
 
         // 🚀 OPTIMIZED: Use target-aware mining for early termination
         uint32_t solution_found = 0;
-        uint32_t target_words[8];
+        uint32_t target_words[RINHASH_HASH_32B_LENGTH];
         
         // Convert target to uint32_t array for GPU kernel
-        for (int i = 0; i < 8; i++) {
-            target_words[i] = ptarget[7-i]; // reverse order for proper comparison
+        for (int i = 0; i < RINHASH_HASH_32B_LENGTH; i++) {
+            target_words[i] = ptarget[RINHASH_HASH_32B_LENGTH-1-i]; // reverse order for proper comparison
         }
         
         RinHash_mine_optimized(
             pdata,
-            19, // nonce offset in work data
             nonce,
-            current_batch_size,
+//            current_batch_size,
+            max_nonce - nonce + 1,
             target_words,
             &found_nonce,
             target_hash,
             best_hash,
-            &solution_found
+            &solution_found,
+            thr_id
+
         );
 
         *hashes_done = nonce - first_nonce + current_batch_size;
@@ -165,17 +161,17 @@ int scanhash_rinhash(int thr_id, struct work *work, uint32_t max_nonce, unsigned
         // 🚀 OPTIMIZED: Check if solution was found or improved hash
         if (solution_found || found_nonce != nonce) {
             // Convert best_hash to vhash for verification
-            uint32_t _ALIGN(64) vhash[8];
-            for (int i = 0; i < 8; i++) {
+            uint32_t _ALIGN(64) vhash[RINHASH_HASH_32B_LENGTH];
+            for (int i = 0; i < RINHASH_HASH_32B_LENGTH; i++) {
                 vhash[i] = 0;
-                vhash[i] |= best_hash[i*4+0] << 24;
-                vhash[i] |= best_hash[i*4+1] << 16;
-                vhash[i] |= best_hash[i*4+2] << 8;
-                vhash[i] |= best_hash[i*4+3];
+                vhash[i] |= (int32_t)best_hash[i*4+0] ;
+                vhash[i] |= (int32_t)best_hash[i*4+1] << 8;
+                vhash[i] |= (int32_t)best_hash[i*4+2] << 16;
+                vhash[i] |= (int32_t)best_hash[i*4+3] << 24;
             }
-            
-            const uint32_t Htarg = ptarget[7];
-            if (vhash[7] <= Htarg && fulltest(vhash, ptarget)) {
+            printf("SOLUTION FOUND? nonce=%10d, TARGET HIGH = %08x, HASH HIGH = %08x \n", 
+                    nonce, ptarget[7], vhash[7]);
+            if (fulltest(vhash, ptarget)) {
                 work->valid_nonces = 1;
                 rinhash_set_target_ratio(work, vhash);  // Use RinHash-specific function
                 work->nonces[0] = found_nonce;

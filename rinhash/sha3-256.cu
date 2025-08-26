@@ -1,7 +1,7 @@
+#include "sha3-256.cuh"
 #include <stdint.h>
 #include <stddef.h>
 
-#define KECCAKF_ROUNDS 24
 
 
 // 64bit 値のビット回転（左回転）

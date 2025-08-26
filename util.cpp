@@ -853,7 +853,7 @@ void work_set_target(struct work* work, double diff)
 }
 void rinhash_work_set_target(struct work* work, double diff)
 {
-	diff_to_target(work->target, diff / 32768);
+	diff_to_target(work->target, diff);
 	work->targetdiff = diff;
 }
 
